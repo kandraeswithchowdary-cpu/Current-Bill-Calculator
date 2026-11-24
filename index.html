@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unit by Unit: home electricity bill estimator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#08130F;--panel:#0E1F18;--ink:#E4F1EA;--mute:#8CA89A;--line:#1F3A2E;--accent:#4FD1A1;--amber:#F2B24D;--bad:#FF7A7A;--soft:#0B1914;color-scheme:dark;
+--head:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;--body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+h1,h2,h3{font-family:var(--head);margin:0;letter-spacing:-.02em;line-height:1.05}
+nav{display:flex;align-items:center;justify-content:space-between;padding:20px 0}
+.brand{font:800 20px var(--head);display:flex;align-items:center;gap:10px}
+.brand i{width:26px;height:26px;border-radius:8px;background:var(--ink);position:relative;display:inline-block}
+.brand i::after{content:"";position:absolute;left:8px;top:5px;width:10px;height:16px;background:var(--amber);clip-path:polygon(60% 0,0 58%,45% 58%,32% 100%,100% 38%,55% 38%)}
+nav a{color:var(--mute);text-decoration:none;font-weight:500;font-size:14px;transition:color .2s}
+nav a:hover{color:var(--ink)}
+.hero{padding:48px 0 36px;max-width:760px}
+.hero h1{font-size:clamp(40px,7vw,76px);font-weight:800}
+.hero h1 span{display:block;overflow:hidden}
+.hero h1 span b{display:block;font-weight:inherit;transform:translateY(105%);animation:rise .9s cubic-bezier(.2,.8,.2,1) forwards}
+.hero h1 span:nth-child(2) b{animation-delay:.12s}
+.hero p{color:var(--mute);font-size:18px;max-width:560px;margin:20px 0 0;opacity:0;animation:fade .8s .5s forwards}
+@keyframes rise{to{transform:none}}
+@keyframes fade{to{opacity:1}}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start;padding-bottom:56px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px}
+.summary{position:sticky;top:16px;overflow:hidden}
+.label{font-size:13px;color:var(--mute);font-weight:500}
+.odo{display:flex;align-items:center;font:800 76px/1 var(--head);height:1em;font-variant-numeric:tabular-nums;margin:6px 0 2px;color:var(--ink)}
+.odo .cur{font-size:.55em;margin-right:6px;color:var(--amber)}
+.digit{display:block;height:1em;overflow:hidden;width:.62em;position:relative}
+.strip{display:block;transition:transform 1.1s cubic-bezier(.2,.9,.2,1);transform:translateY(calc(var(--d) * -1em))}
+.strip em{display:block;height:1em;font-style:normal;text-align:center}
+.sub{color:var(--mute);font-size:15px}
+.sub b{color:var(--ink);font-weight:600}
+.meter{margin:22px 0 6px;position:relative;height:12px;background:var(--soft);border-radius:99px;border:1px solid var(--line)}
+.fill{position:absolute;inset:0 auto 0 0;border-radius:99px;background:var(--accent);transition:width 1s cubic-bezier(.2,.9,.2,1),background .4s}
+.fill.over{background:var(--bad)}
+.tick{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--ink);opacity:.45;transition:left 1s cubic-bezier(.2,.9,.2,1)}
+.ticks{position:relative;height:18px;font-size:12px;color:var(--mute)}
+.ticks span{position:absolute;transform:translateX(-50%);transition:left 1s cubic-bezier(.2,.9,.2,1)}
+.status{font-size:14px;margin:6px 0 16px;min-height:21px}
+.rows{border-top:1px solid var(--line);margin-top:6px}
+.rows div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;font-variant-numeric:tabular-nums}
+.rows div span:first-child{color:var(--mute)}
+.rows .tot{font-weight:600;border-bottom:0}
+.days{margin-top:16px}
+.days label{display:flex;justify-content:space-between;font-size:14px;font-weight:500}
+input[type=range]{width:100%;accent-color:var(--accent);margin:8px 0 0}
+details{margin-top:14px;font-size:14px}
+summary{cursor:pointer;color:var(--mute);font-weight:500}
+.rates{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.rates label{display:block;font-size:12px;color:var(--mute)}
+.top{margin-top:14px;padding:12px 14px;background:var(--soft);border-radius:12px;font-size:14px;border:1px solid var(--line)}
+.head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:14px}
+.head h2{font-size:28px;font-weight:700}
+button{font:600 14px var(--body);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 14px;cursor:pointer;transition:transform .15s,border-color .2s,background .2s}
+button:hover{border-color:var(--accent)}
+button:active{transform:scale(.97)}
+button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,select{font:400 15px var(--body);color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:9px;padding:8px 10px;width:100%;min-width:0;transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent);outline:none}
+.dev{display:grid;grid-template-columns:minmax(0,1.6fr) 84px 84px 96px 74px 28px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);animation:pop .4s ease both}
+.dev.hdr{font-size:12px;color:var(--mute);font-weight:500;padding-top:0;animation:none}
+@keyframes pop{from{opacity:0;transform:translateY(-6px)}}
+.dev.gone{opacity:0;transform:translateX(16px);transition:.25s}
+.u{font:700 16px var(--head);text-align:right;font-variant-numeric:tabular-nums}
+.share{grid-column:1/-1;height:4px;border-radius:9px;background:var(--soft);overflow:hidden;margin-top:-2px}
+.share i{display:block;height:100%;width:0;background:var(--amber);border-radius:9px;transition:width .8s cubic-bezier(.2,.9,.2,1)}
+.x{padding:0;width:28px;height:28px;border:0;background:none;color:var(--mute);font-size:18px;line-height:1}
+.x:hover{color:var(--bad)}
+[hidden]{display:none!important}
+.empty h3{font-size:22px;margin-bottom:6px}.empty p{color:var(--mute);margin:0 0 14px}
+.mock{display:grid;grid-template-columns:minmax(0,1.6fr) 84px 84px 96px 74px;gap:8px;align-items:center}
+.mock.lab{font-size:12px;color:var(--mute);font-weight:500;margin-bottom:6px}
+.fld{min-height:38px;padding:8px 10px;background:var(--soft);border:1px solid var(--line);border-radius:9px;font-size:15px;transition:border-color .2s,box-shadow .2s}
+.fld.on{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.fld.on::after{content:'';display:inline-block;width:1px;height:1em;background:var(--ink);margin-left:1px;vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.pulse{animation:pulse .7s}
+@keyframes pulse{40%{transform:scale(1.25);color:var(--accent)}}
+.empty .cap{min-height:48px;margin:14px 0 8px;color:var(--ink);font-weight:500}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+@media (max-width:620px){.mock{grid-template-columns:1fr 1fr}.mock>:first-child{grid-column:1/-1}.mock.lab{display:none}}
+.how{padding:8px 0 64px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.how h2{font-size:26px;margin-bottom:12px}
+.how p{color:var(--mute);margin:0 0 12px;max-width:60ch}
+code{background:var(--soft);border:1px solid var(--line);padding:2px 7px;border-radius:7px;font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:9px 0;border-bottom:1px solid var(--line)}
+th{color:var(--mute);font-weight:500}
+.note{border-left:3px solid var(--amber);padding-left:14px}
+footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--mute);font-size:13px}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.summary{position:static;order:-1}.how{grid-template-columns:1fr}}
+@media (max-width:620px){
+.dev{grid-template-columns:1fr 1fr 1fr 28px;grid-template-areas:"n n n x" "w h m u"}
+.dev.hdr{display:none}.dev>:nth-child(1){grid-area:n}.dev>:nth-child(2){grid-area:w}.dev>:nth-child(3){grid-area:h}.dev>:nth-child(4){grid-area:m}.dev>:nth-child(5){grid-area:u}.dev>:nth-child(6){grid-area:x}
+.odo{font-size:64px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}.hero h1 span b{transform:none}.hero p{opacity:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav><div class="brand"><i></i>Unit by Unit</div><a href="#how">How it works</a></nav>
+
+<header class="hero">
+<h1><span><b>Know where every</b></span><span><b>unit of your bill goes.</b></span></h1>
+<p>List the appliances in your home, say how long each one runs, and watch your units and bill update as you type.</p>
+</header>
+
+<main class="grid">
+<section class="card" aria-labelledby="dh">
+<div class="head"><h2 id="dh">Your appliances</h2><div><button id="reset">Clear all</button> <button id="add" class="primary">Add appliance</button></div></div>
+<div class="dev hdr" id="hdr"><span>Appliance</span><span>Watts</span><span>Hours</span><span>Per</span><span style="text-align:right">Units</span><span></span></div>
+<div id="list"></div>
+<div id="empty" class="empty">
+<h3>Add your first appliance</h3>
+<p>Watch one example, then enter your own. Each appliance needs three things.</p>
+<div class="mock lab"><span>Appliance</span><span>Watts</span><span>Hours</span><span>Per</span><span style="text-align:right">Units</span></div>
+<div class="mock"><span class="fld" id="dn"></span><span class="fld" id="dw"></span><span class="fld" id="dh"></span><span class="fld" id="dm"></span><b class="u" id="du">0.00</b></div>
+<p class="cap" id="dc" aria-live="polite"></p>
+<div class="acts"><button class="primary" id="first">Add my first appliance</button><button id="replay">Replay demo</button><button id="sample">Load sample household</button></div>
+<p>Watts are printed on the appliance’s sticker or box. Typical values: ceiling fan 75 W, LED bulb 9 W, TV 100 W.</p>
+</div>
+</section>
+
+<aside class="card summary" aria-live="polite">
+<div class="label">Estimated bill</div>
+<div class="odo" id="odo" aria-label="Estimated bill"></div>
+<div class="sub"><b id="units">0.0</b> units over <b id="dl">31</b> days</div>
+<div class="meter"><div class="fill" id="fill"></div><div class="tick" id="t100"></div><div class="tick" id="t200"></div></div>
+<div class="ticks"><span id="l100">100</span><span id="l200">200</span></div>
+<div class="status" id="status"></div>
+<div class="rows" id="rows"></div>
+<div class="top" id="top"></div>
+<div class="days"><label for="days"><span>Billing days</span><span id="dv">31</span></label><input type="range" id="days" min="28" max="33" value="31" autocomplete="off"></div>
+<details><summary>Tariff assumptions</summary>
+<div class="rates">
+<div><label for="r1">First 100 (₹)</label><input type="number" id="r1" step="0.05" value="3.40" autocomplete="off"></div>
+<div><label for="r2">101 to 200 (₹)</label><input type="number" id="r2" step="0.05" value="4.80" autocomplete="off"></div>
+<div><label for="fx">Fixed + duty (₹)</label><input type="number" id="fx" step="1" value="20" autocomplete="off"></div>
+</div></details>
+</aside>
+</main>
+
+<section class="how" id="how">
+<div>
+<h2>How the numbers work</h2>
+<p>Every appliance uses the same formula. A bill “unit” is one kilowatt-hour: a 1000 W device running for one hour.</p>
+<p><code>units = watts × hours ÷ 1000</code></p>
+<p>Weekly usage is scaled by days ÷ 7, and the units are added up. The slab rates are then applied one band at a time, so your first 100 units cost less per unit than the next 100.</p>
+</div>
+<div>
+<h2>Slabs used</h2>
+<table><tr><th>Units in the month</th><th>Rate per unit</th></tr>
+<tr><td>First 100</td><td id="s1">₹3.40</td></tr>
+<tr><td>101 to 200</td><td id="s2">₹4.80</td></tr>
+<tr><td>Above 200: first 200</td><td>₹5.10</td></tr>
+<tr><td>201 to 300</td><td>₹7.70</td></tr>
+<tr><td>301 to 400</td><td>₹9.00</td></tr></table>
+<p class="note" style="margin-top:16px">The lower tier matches the official TGSPDCL schedule. The 101 to 200 rates, the fixed charge and the above-200 rates are unverified estimates, and your bill may also carry a fuel surcharge or time-of-day rates. Change them under “Tariff assumptions” to match your bill.</p>
+</div>
+</section>
+<footer>The sample household is a student home tuned to a ₹718 bill, so treat its wattages as estimates, not measurements.</footer>
+</div>
+
+<script>
+const START=[["Fan 1",75,10,"day"],["Fan 2",75,6,"day"],["Fan 3",75,6,"day"],["Table fan",50,15,"week"],["Tubelight 1",50,6,"day"],["Tubelight 2",50,4,"day"],["Tubelight 3",50,4,"day"],["Small light 1",9,4,"day"],["Small light 2",9,3,"day"],["Small light 3",9,2,"day"],["WiFi router",12,24,"day"],["Fridge (1.5 units/day)",62.5,24,"day"],["TV",100,5.5,"day"],["Set-top box",15,5.5,"day"],["Iron box",1000,2.25,"month"],["Mixer grinder",500,.5,"week"],["Phone charging",10,4.5,"day"],["Laptop charger",60,2,"day"],["Washing machine",400,1,"day"]];
+const HI=[[200,5.10],[100,7.70],[100,9.00],[400,9.50],[Infinity,10.00]];
+let D=[];
+const $=id=>document.getElementById(id),list=$("list");
+const inr=v=>"₹"+v.toFixed(2);
+const unitsOf=(d,days)=>{const h=d.m==="day"?d.h*days:d.m==="week"?d.h*days/7:d.h;return (+d.w||0)*(h||0)/1000};
+
+function slabs(u){
+  const r1=+$("r1").value||0,r2=+$("r2").value||0,out=[];let left=u;
+  const table=u<=200?[[100,r1],[100,r2]]:HI;
+  const names=u<=200?["First 100 units","Next units (101 to 200)"]:["First 200 units","201 to 300","301 to 400","401 to 800","Above 800"];
+  table.forEach(([size,rate],i)=>{if(left<=0)return;const used=Math.min(left,size);left-=used;out.push([names[i]+" × "+rate.toFixed(2),used*rate,used])});
+  return out;
+}
+function setOdo(v){
+  const s=String(Math.round(v)),el=$("odo");
+  if(el.dataset.len!==String(s.length)){
+    el.dataset.len=s.length;el.innerHTML='<span class="cur">₹</span>';
+    for(let i=0;i<s.length;i++){const d=document.createElement("span");d.className="digit";d.innerHTML='<span class="strip" style="--d:0">'+[0,1,2,3,4,5,6,7,8,9].map(n=>"<em>"+n+"</em>").join("")+"</span>";el.appendChild(d)}
+    el.offsetWidth;
+  }
+  [...el.querySelectorAll(".strip")].forEach((st,i)=>st.style.setProperty("--d",s[i]));
+  el.setAttribute("aria-label","Estimated bill "+s+" rupees");
+}
+const cur={};
+function tween(id,to,dec){
+  const el=$(id),from=cur[id]||0,t0=performance.now();cur[id]=to;
+  (function f(t){const k=Math.min(1,(t-t0)/800),e=1-Math.pow(1-k,3);el.textContent=(from+(to-from)*e).toFixed(dec);if(k<1)requestAnimationFrame(f)})(t0);
+}
+function update(){
+  const days=+$("days").value;$("dv").textContent=days;$("dl").textContent=days;
+  $("s1").textContent=inr(+$("r1").value||0);$("s2").textContent=inr(+$("r2").value||0);
+  const us=D.map(d=>unitsOf(d,days)),total=us.reduce((a,b)=>a+b,0),max=Math.max(...us,.001);
+  [...list.children].forEach((r,i)=>{if(!us[i]&&us[i]!==0)return;r.querySelector(".u").textContent=us[i].toFixed(2);r.querySelector(".share i").style.width=(us[i]/max*100)+"%"});
+  const sl=slabs(total),fx=+$("fx").value||0,energy=sl.reduce((a,s)=>a+s[1],0),bill=total>0?energy+fx:0;
+  $("empty").hidden=D.length>0;$("hdr").hidden=!D.length;
+  setOdo(bill);tween("units",total,1);
+  const scale=Math.max(250,total*1.15);
+  $("fill").style.width=Math.min(100,total/scale*100)+"%";$("fill").classList.toggle("over",total>200);
+  [["t100","l100",100],["t200","l200",200]].forEach(([t,l,v])=>{$(t).style.left=(v/scale*100)+"%";$(l).style.left=(v/scale*100)+"%"});
+  $("status").textContent=total>200?"Over the 200-unit line, so the higher slab table applies.":total>0?(200-total).toFixed(1)+" units left before the 200-unit line.":"Add an appliance to begin.";
+  $("status").style.color=total>200?"var(--bad)":"var(--mute)";
+  $("rows").innerHTML=!total?"":sl.map(s=>"<div><span>"+s[0]+"</span><span>"+inr(s[1])+"</span></div>").join("")+"<div><span>Fixed charge and duty</span><span>"+inr(fx)+"</span></div><div class=\"tot\"><span>Estimated bill</span><span>"+inr(bill)+"</span></div>";
+  const k=us.indexOf(max);
+  $("top").textContent=total>0?"Biggest load: "+D[k].n+", "+us[k].toFixed(1)+" units ("+Math.round(us[k]/total*100)+"% of the total).":"No appliances yet.";
+}
+function row(d,focus){
+  const r=document.createElement("div");r.className="dev";
+  const mk=(type,key,attrs)=>{const i=document.createElement("input");i.type=type;Object.assign(i,attrs);i.value=d[key];i.setAttribute("aria-label",key);i.addEventListener("input",()=>{d[key]=type==="number"?i.value:i.value;update()});return i};
+  const name=mk("text","n"),w=mk("number","w",{min:0,step:"any"}),h=mk("number","h",{min:0,step:"any"});
+  name.setAttribute("aria-label","Appliance name");w.setAttribute("aria-label","Watts");h.setAttribute("aria-label","Hours");
+  const sel=document.createElement("select");sel.setAttribute("aria-label","Hours are per");
+  [["day","day"],["week","week"],["month","month"]].forEach(([v,t])=>sel.add(new Option(t,v)));sel.value=d.m;sel.onchange=()=>{d.m=sel.value;update()};
+  const u=document.createElement("div");u.className="u";
+  const x=document.createElement("button");x.className="x";x.textContent="×";x.setAttribute("aria-label","Remove "+d.n);
+  x.onclick=()=>{r.classList.add("gone");setTimeout(()=>{D.splice(D.indexOf(d),1);r.remove();update()},230)};
+  const s=document.createElement("div");s.className="share";s.innerHTML="<i></i>";
+  r.append(name,w,h,sel,u,x,s);list.appendChild(r);if(focus){name.focus();name.select()}
+}
+function build(){list.innerHTML="";D.forEach(d=>row(d));update()}
+$("add").onclick=()=>{const d={n:"New appliance",w:100,h:1,m:"day"};D.push(d);row(d,true);update()};
+$("reset").onclick=()=>{D=[];build()};
+["days","r1","r2","fx"].forEach(id=>$(id).addEventListener("input",update));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));let run=0;
+async function playDemo(){const id=++run,F={n:$('dn'),w:$('dw'),h:$('dh'),m:$('dm')},u=$('du'),c=$('dc'),days=+$('days').value,V={n:'Ceiling fan',w:'75',h:'6',m:'day'},T={n:'1. Type the appliance name.',w:'2. Enter its watts (see the sticker on the appliance).',h:'3. Enter how many hours it runs.',m:'4. Choose whether those hours are per day, week or month.'},calc=75*6*days/1000,quick=matchMedia('(prefers-reduced-motion:reduce)').matches;
+u.classList.remove('pulse');u.textContent='0.00';c.textContent='';for(const k in F){F[k].textContent='';F[k].classList.remove('on')}
+const done=()=>{u.textContent=calc.toFixed(2);u.classList.add('pulse');c.textContent='75 W × 6 h × '+days+' days ÷ 1000 = '+calc.toFixed(2)+' units. The bill on the right adds up every appliance you enter.'};
+if(quick){for(const k in F)F[k].textContent=V[k];done();return}
+for(const k of ['n','w','h','m']){if(id!==run)return;F[k].classList.add('on');c.textContent=T[k];for(let i=1;i<=V[k].length;i++){F[k].textContent=V[k].slice(0,i);await sleep(k==='n'?70:150);if(id!==run)return}await sleep(800);if(id!==run)return;F[k].classList.remove('on')}
+if(id===run)done()}
+$('first').onclick=()=>$('add').click();$('replay').onclick=playDemo;
+$('sample').onclick=()=>{D=START.map(([n,w,h,m])=>({n,w,h,m}));build()};
+build();
+setTimeout(update,350);setTimeout(playDemo,700);
+</script>
+</body>
+</html>
